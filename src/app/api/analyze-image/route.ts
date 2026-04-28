@@ -23,6 +23,7 @@ Respond with ONLY a valid raw JSON object using these exact keys:
 {
   "shortDescription": "A punchy 1-2 sentence hook that grabs attention, describes the image, and highlights the key USP if provided.",
   "longDescription": "A detailed 3-5 sentence listing description. Mention key visual details, mood, style, ideal use cases, and weave in any USPs naturally. Written to persuade and inform a buyer.",
+  "productDescription": "A rich, structured product description written for an online store product page. Use 2-3 short paragraphs. Start with a compelling intro, then highlight key features and benefits (weaving in USPs if provided), and end with a call-to-action sentence. Use natural, persuasive language that builds trust and desire.",
   "seoTitle": "An SEO and marketplace-optimized title under 60 characters. Include main subject and style keywords.",
   "seoDescription": "An SEO meta description under 160 characters optimized for search and platform discovery.",
   "seoAltText": "A descriptive, keyword-rich alt text for accessibility and SEO."

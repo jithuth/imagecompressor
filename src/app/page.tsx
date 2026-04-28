@@ -11,6 +11,7 @@ import { UploadCloud, CheckCircle, Loader2, Image as ImageIcon, Download, X, Ale
 interface ImageDescriptions {
   shortDescription: string;
   longDescription: string;
+  productDescription: string;
   seoTitle: string;
   seoDescription: string;
   seoAltText: string;
@@ -138,13 +139,8 @@ export default function Home() {
   });
 
   // --- ANALYZER LOGIC ---
-  const onDropAnalyzer = useCallback(async (acceptedFiles: File[]) => {
-    const file = acceptedFiles[0];
-    if (!file) return;
-
-    if (analyzedImage?.previewUrl) URL.revokeObjectURL(analyzedImage.previewUrl);
-
-    setAnalyzedImage({ file, previewUrl: URL.createObjectURL(file), isAnalyzing: true });
+  const analyzeFile = useCallback(async (file: File) => {
+    setAnalyzedImage(prev => prev ? { ...prev, isAnalyzing: true, descriptions: undefined, errorMsg: undefined } : { file, previewUrl: URL.createObjectURL(file), isAnalyzing: true });
 
     try {
       const compressionOptions = { maxSizeMB: 0.5, maxWidthOrHeight: 800, useWebWorker: true };
@@ -170,7 +166,15 @@ export default function Home() {
     } catch (error: any) {
       setAnalyzedImage(prev => prev ? { ...prev, isAnalyzing: false, errorMsg: error.message } : null);
     }
-  }, [analyzedImage]);
+  }, [uspText]);
+
+  const onDropAnalyzer = useCallback(async (acceptedFiles: File[]) => {
+    const file = acceptedFiles[0];
+    if (!file) return;
+    if (analyzedImage?.previewUrl) URL.revokeObjectURL(analyzedImage.previewUrl);
+    setAnalyzedImage({ file, previewUrl: URL.createObjectURL(file), isAnalyzing: false });
+    analyzeFile(file);
+  }, [analyzedImage, analyzeFile]);
 
   const { getRootProps: getAnalyzerRootProps, getInputProps: getAnalyzerInputProps, isDragActive: isAnalyzerDragActive } = useDropzone({
     onDrop: onDropAnalyzer, accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.webp', '.bmp'] }, maxFiles: 1
@@ -365,21 +369,51 @@ export default function Home() {
 
                         <CopyField label="Short Listing Description" value={analyzedImage.descriptions.shortDescription} color="purple" />
                         <CopyField label="Full Listing Description" value={analyzedImage.descriptions.longDescription} color="purple" />
+
+                        {/* Product Description - highlighted card */}
+                        {analyzedImage.descriptions.productDescription && (
+                          <div className="bg-gradient-to-br from-purple-950/40 to-indigo-950/30 border border-purple-800/40 rounded-xl p-4 group/field">
+                            <div className="flex items-center justify-between mb-2">
+                              <h3 className="text-[10px] font-semibold text-purple-300 uppercase tracking-wider flex items-center gap-1.5">
+                                <Sparkles className="w-3.5 h-3.5" /> Product Description
+                              </h3>
+                              <button
+                                onClick={() => navigator.clipboard.writeText(analyzedImage.descriptions!.productDescription)}
+                                className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-200 transition-colors opacity-0 group-hover/field:opacity-100"
+                              >
+                                <Copy className="w-3.5 h-3.5" /><span>Copy</span>
+                              </button>
+                            </div>
+                            <p className="text-zinc-300 text-sm leading-relaxed whitespace-pre-line">{analyzedImage.descriptions.productDescription}</p>
+                          </div>
+                        )}
+
                         <CopyField label="Platform / SEO Title" value={analyzedImage.descriptions.seoTitle} color="emerald" />
                         <CopyField label="SEO Meta Description" value={analyzedImage.descriptions.seoDescription} color="emerald" />
                         <CopyField label="Image Alt Text" value={analyzedImage.descriptions.seoAltText} color="emerald" />
 
-                        <button
-                          onClick={() => {
-                            const d = analyzedImage.descriptions!;
-                            const text = `Short: ${d.shortDescription}\n\nLong: ${d.longDescription}\n\nSEO Title: ${d.seoTitle}\n\nSEO Description: ${d.seoDescription}\n\nAlt Text: ${d.seoAltText}`;
-                            navigator.clipboard.writeText(text);
-                          }}
-                          className="w-full mt-2 py-3 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-2xl transition-colors text-sm shadow-[0_0_20px_rgba(147,51,234,0.25)]"
-                        >
-                          <Copy className="w-4 h-4" />
-                          Copy All to Clipboard
-                        </button>
+                        <div className="flex gap-3 mt-2">
+                          <button
+                            onClick={() => analyzedImage.file && analyzeFile(analyzedImage.file)}
+                            disabled={analyzedImage.isAnalyzing}
+                            className="flex-1 py-3 flex items-center justify-center gap-2 bg-zinc-800 hover:bg-zinc-700 disabled:opacity-50 text-white font-medium rounded-2xl transition-colors text-sm border border-zinc-700"
+                          >
+                            {analyzedImage.isAnalyzing
+                              ? <><Loader2 className="w-4 h-4 animate-spin" />Regenerating...</>
+                              : <><Wand2 className="w-4 h-4 text-purple-400" />Regenerate</>}
+                          </button>
+                          <button
+                            onClick={() => {
+                              const d = analyzedImage.descriptions!;
+                              const text = `Short: ${d.shortDescription}\n\nLong: ${d.longDescription}\n\nProduct Description:\n${d.productDescription}\n\nSEO Title: ${d.seoTitle}\n\nSEO Description: ${d.seoDescription}\n\nAlt Text: ${d.seoAltText}`;
+                              navigator.clipboard.writeText(text);
+                            }}
+                            className="flex-1 py-3 flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-2xl transition-colors text-sm shadow-[0_0_20px_rgba(147,51,234,0.25)]"
+                          >
+                            <Copy className="w-4 h-4" />
+                            Copy All
+                          </button>
+                        </div>
                       </motion.div>
                     ) : (
                       <div className="bg-zinc-900/50 border border-zinc-800 rounded-3xl p-16 flex flex-col items-center gap-4 text-zinc-600">
