@@ -8,24 +8,33 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { image, mimeType, usp } = await req.json();
+    const { image, mimeType, usp, tone } = await req.json();
     if (!image) return NextResponse.json({ error: 'No image provided.' }, { status: 400 });
 
     const base64Data = image.includes(",") ? image.split(",")[1] : image;
 
     const uspSection = usp
-      ? `\n\nThe seller has provided these Unique Selling Points (USPs) about this product/image — you MUST incorporate them naturally into the short description, long description, and SEO content:\n"${usp}"`
+      ? `\n\nThe seller has provided these Unique Selling Points (USPs) — you MUST incorporate them naturally:\n"${usp}"`
       : '';
 
+    const toneGuide: Record<string, string> = {
+      professional: 'Write in a clear, authoritative, business-oriented tone. Use formal language that builds trust.',
+      casual: 'Write in a friendly, conversational tone. Keep it warm, approachable and relatable.',
+      luxury: 'Write in an elegant, sophisticated tone. Use premium, evocative language that conveys exclusivity.',
+      playful: 'Write in a fun, energetic, enthusiastic tone. Use punchy, creative language that excites the reader.',
+    };
+    const toneInstruction = toneGuide[tone || 'professional'];
+
     const prompt = `You are an expert content writer for online marketplaces and digital platforms.
+Tone instruction: ${toneInstruction}
 Analyze this image and generate compelling, sales-driven listing content.${uspSection}
 Respond with ONLY a valid raw JSON object using these exact keys:
 {
-  "shortDescription": "A punchy 1-2 sentence hook that grabs attention, describes the image, and highlights the key USP if provided.",
-  "longDescription": "A detailed 3-5 sentence listing description. Mention key visual details, mood, style, ideal use cases, and weave in any USPs naturally. Written to persuade and inform a buyer.",
-  "productDescription": "A rich, structured product description written for an online store product page. Use 2-3 short paragraphs. Start with a compelling intro, then highlight key features and benefits (weaving in USPs if provided), and end with a call-to-action sentence. Use natural, persuasive language that builds trust and desire.",
-  "seoTitle": "An SEO and marketplace-optimized title under 60 characters. Include main subject and style keywords.",
-  "seoDescription": "An SEO meta description under 160 characters optimized for search and platform discovery.",
+  "shortDescription": "A punchy 1-2 sentence hook that grabs attention, describes the image, and highlights any USP.",
+  "longDescription": "A detailed 3-5 sentence listing description covering visual details, mood, style, use cases, and USPs.",
+  "productDescription": "A rich 2-3 paragraph product description for an online store. Open with a compelling intro, detail features and benefits weaving in USPs, and close with a call-to-action.",
+  "seoTitle": "An SEO and marketplace-optimized title under 60 characters.",
+  "seoDescription": "An SEO meta description under 160 characters.",
   "seoAltText": "A descriptive, keyword-rich alt text for accessibility and SEO."
 }
 No markdown, no backticks, no explanation — ONLY the raw JSON.`;
